@@ -335,6 +335,80 @@ body:not(.logged-in) footer {
     margin-top: 15px;
     font-size: 13px;
 }
+
+#portfolio-toolbar {
+    display: none;
+    justify-content: flex-end;
+    margin: 25px 0;
+}
+
+#edit-portfolio-button,
+#save-portfolio-button,
+#cancel-portfolio-button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+#edit-portfolio-button,
+#save-portfolio-button {
+    background: #c86f98;
+    color: white;
+}
+
+#cancel-portfolio-button {
+    background: #eee8ff;
+    color: #69475c;
+    margin-left: 8px;
+}
+
+#editor-panel {
+    display: none;
+    background: white;
+    padding: 25px;
+    border: 1px solid #f5e7ee;
+    border-radius: 17px;
+}
+
+#editor-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.editor-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: #987e8c;
+    font-size: 13px;
+}
+
+.editor-field textarea {
+    width: 100%;
+    min-height: 65px;
+    padding: 12px;
+    border: 1px solid #f0dce6;
+    border-radius: 10px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+#editor-message {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #987e8c;
+}
+
+@media(max-width:700px) {
+    #editor-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style>
 </head>
 
@@ -385,6 +459,32 @@ body:not(.logged-in) footer {
 </header>
 
 <main class="container">
+    
+<div id="portfolio-toolbar">
+    <button id="edit-portfolio-button" type="button">
+        Edit Portfolio ♡
+    </button>
+</div>
+
+<section id="editor-panel" class="section">
+    <h2 class="section-title">Edit Portfolio ♡</h2>
+    <p class="section-subtitle">
+        Update the information and save your changes.
+    </p>
+
+    <div id="editor-fields"></div>
+
+    <button id="save-portfolio-button" type="button">
+        Save Changes ♡
+    </button>
+
+    <button id="cancel-portfolio-button" type="button">
+        Cancel
+    </button>
+
+    <p id="editor-message"></p>
+</section>
+
     <section id="owner-panel" class="section" style="display:none;">
     <h2 class="section-title">Account Approvals ♡</h2>
     <p class="section-subtitle">Review new registration requests.</p>
@@ -794,7 +894,6 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 console.log("Firebase initialized!");
-</script>
 </script>
 </body>
 </html>
