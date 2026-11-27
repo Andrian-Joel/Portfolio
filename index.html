@@ -1,0 +1,447 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Her Portfolio ♡</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+    --pink: #e99ab9;
+    --dark-pink: #c86f98;
+    --light-pink: #fff0f5;
+    --lavender: #eee8ff;
+    --text: #51404b;
+    --muted: #987e8c;
+    --white: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: #fff8fb;
+    color: var(--text);
+}
+
+header {
+    background: rgba(255,255,255,0.9);
+    padding: 20px 7%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f5e3eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+}
+
+.logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 25px;
+    color: var(--dark-pink);
+}
+
+.logo span {
+    color: #dca7d9;
+}
+
+nav {
+    display: flex;
+    gap: 24px;
+}
+
+nav a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: .2s;
+}
+
+nav a:hover {
+    color: var(--dark-pink);
+}
+
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 45px 25px;
+}
+
+.hero {
+    background: linear-gradient(120deg, #ffe3ed, #f1e9ff);
+    border-radius: 25px;
+    padding: 55px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    overflow: hidden;
+}
+
+.hero-text {
+    max-width: 600px;
+}
+
+.eyebrow {
+    color: var(--dark-pink);
+    font-size: 12px;
+    letter-spacing: 3px;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(38px, 6vw, 58px);
+    margin-bottom: 15px;
+    color: #69475c;
+}
+
+.hero p {
+    color: #856d7b;
+    line-height: 1.8;
+    font-size: 14px;
+}
+
+.profile-placeholder {
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.65);
+    border: 6px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    box-shadow: 0 10px 35px #dba8c455;
+}
+
+.section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 29px;
+    margin-bottom: 8px;
+}
+
+.section-subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.section {
+    margin-top: 55px;
+    scroll-margin-top: 100px;
+}
+
+.search-box {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1px solid #f0dce6;
+    background: white;
+    border-radius: 12px;
+    outline: none;
+    font-family: inherit;
+    margin-bottom: 25px;
+}
+
+.search-box:focus {
+    border-color: var(--pink);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 17px;
+    border: 1px solid #f5e7ee;
+    box-shadow: 0 5px 20px #dca5bd12;
+    transition: .25s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px #dca5bd25;
+}
+
+.card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    margin-bottom: 17px;
+    color: #a65e80;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f7edf2;
+    font-size: 13px;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item span:first-child {
+    color: var(--muted);
+}
+
+.info-item span:last-child {
+    font-weight: 600;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.badge {
+    display: inline-block;
+    background: #fff0f5;
+    color: #b56d8e;
+    border-radius: 20px;
+    padding: 7px 13px;
+    font-size: 12px;
+    margin: 4px;
+}
+
+.note {
+    background: linear-gradient(120deg, #fff0f5, #f2edff);
+    padding: 25px;
+    border-radius: 17px;
+    line-height: 1.8;
+    font-size: 14px;
+    color: #81677a;
+}
+
+footer {
+    text-align: center;
+    padding: 35px;
+    color: #b394a4;
+    font-size: 12px;
+}
+
+.hidden {
+    display: none;
+}
+
+@media(max-width:700px) {
+    header {
+        padding: 17px 5%;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    nav {
+        gap: 13px;
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    nav a {
+        white-space: nowrap;
+    }
+
+    .hero {
+        padding: 35px 25px;
+        flex-direction: column-reverse;
+        align-items: flex-start;
+    }
+
+    .profile-placeholder {
+        width: 115px;
+        height: 115px;
+        min-width: 115px;
+        font-size: 45px;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">Her Portfolio <span>♡</span></div>
+
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#personal">Personal</a>
+        <a href="#interests">Interests</a>
+        <a href="#education">Education</a>
+        <a href="#dates">Dates</a>
+        <a href="#notes">Notes</a>
+    </nav>
+</header>
+
+<main class="container">
+
+<section class="hero" id="home">
+    <div class="hero-text">
+        <div class="eyebrow">A LITTLE WORLD OF HER ♡</div>
+        <h1>Her Portfolio</h1>
+        <p>
+            A personal collection of information, interests,
+            memories and little details that make her unique.
+        </p>
+    </div>
+
+    <div class="profile-placeholder">🎀</div>
+</section>
+
+<section class="section" id="personal">
+    <h2 class="section-title">Personal Information</h2>
+    <p class="section-subtitle">The basic details about her.</p>
+
+    <input class="search-box" id="search"
+    placeholder="Search information...">
+
+    <div class="grid">
+
+        <div class="card searchable">
+            <h3>♡ Basic Details</h3>
+            <div class="info-item"><span>Full Name</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Nickname</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Birthday</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Age</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Country</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Languages</span><span>Your Entry</span></div>
+        </div>
+
+        <div class="card searchable">
+            <h3>♡ Personal Details</h3>
+            <div class="info-item"><span>Favourite Colour</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Food</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Drink</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Season</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Animal</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Music</span><span>Your Entry</span></div>
+        </div>
+
+    </div>
+</section>
+
+<section class="section" id="interests">
+    <h2 class="section-title">Interests & Preferences</h2>
+    <p class="section-subtitle">Things she enjoys and loves.</p>
+
+    <div class="grid">
+
+        <div class="card searchable">
+            <h3>♡ Likes</h3>
+            <div>
+                <span class="badge">Your Entry</span>
+                <span class="badge">Your Entry</span>
+                <span class="badge">Your Entry</span>
+            </div>
+        </div>
+
+        <div class="card searchable">
+            <h3>♡ Dislikes</h3>
+            <div>
+                <span class="badge">Your Entry</span>
+                <span class="badge">Your Entry</span>
+                <span class="badge">Your Entry</span>
+            </div>
+        </div>
+
+        <div class="card searchable">
+            <h3>♡ Hobbies</h3>
+            <div>
+                <span class="badge">Your Entry</span>
+                <span class="badge">Your Entry</span>
+            </div>
+        </div>
+
+        <div class="card searchable">
+            <h3>♡ Favourite Things</h3>
+            <div class="info-item"><span>Movie</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Song</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Artist</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Place</span><span>Your Entry</span></div>
+        </div>
+
+    </div>
+</section>
+
+<section class="section" id="education">
+    <h2 class="section-title">Education</h2>
+    <p class="section-subtitle">Her academic information.</p>
+
+    <div class="grid">
+        <div class="card searchable">
+            <h3>♡ Academic Details</h3>
+            <div class="info-item"><span>School</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Grade</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Favourite Subject</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Interests</span><span>Your Entry</span></div>
+        </div>
+
+        <div class="card searchable">
+            <h3>♡ Achievements</h3>
+            <div class="info-item"><span>Achievement 1</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Achievement 2</span><span>Your Entry</span></div>
+            <div class="info-item"><span>Achievement 3</span><span>Your Entry</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="dates">
+    <h2 class="section-title">Important Dates</h2>
+    <p class="section-subtitle">Dates worth remembering.</p>
+
+    <div class="card searchable">
+        <div class="info-item"><span>Birthday</span><span>Your Entry</span></div>
+        <div class="info-item"><span>Special Occasion</span><span>Your Entry</span></div>
+        <div class="info-item"><span>Memorable Day</span><span>Your Entry</span></div>
+    </div>
+</section>
+
+<section class="section" id="notes">
+    <h2 class="section-title">Personal Notes</h2>
+    <p class="section-subtitle">Additional information and thoughts.</p>
+
+    <div class="note searchable">
+        Add your personal notes here...
+    </div>
+</section>
+
+</main>
+
+<footer>
+    Made with ♡ &nbsp; Her Portfolio
+    <br><br>
+    A little collection of lovely details.
+</footer>
+
+<script>
+document.getElementById("search").addEventListener("input", function() {
+    const query = this.value.toLowerCase();
+
+    document.querySelectorAll(".searchable").forEach(card => {
+        card.classList.toggle(
+            "hidden",
+            !card.innerText.toLowerCase().includes(query)
+        );
+    });
+});
+</script>
+
+</body>
+</html>
