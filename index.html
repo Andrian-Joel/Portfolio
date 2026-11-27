@@ -641,6 +641,7 @@ document.getElementById("search").addEventListener("input", function() {
     });
 });
 </script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 
@@ -659,7 +660,8 @@ import {
     setDoc,
     deleteDoc,
     collection,
-    getDocs
+    getDocs,
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -676,18 +678,240 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// ELEMENTS
 const loginForm = document.getElementById("login-form");
 const loginError = document.getElementById("login-error");
 const loginScreen = document.getElementById("login-screen");
 const registerForm = document.getElementById("register-form");
 const registerMessage = document.getElementById("register-message");
+
 const ownerPanel = document.getElementById("owner-panel");
 const registrationList = document.getElementById("registration-list");
 
-let isRegistering = false;
+const toolbar = document.getElementById("portfolio-toolbar");
+const editButton = document.getElementById("edit-portfolio-button");
+const editorPanel = document.getElementById("editor-panel");
+const editorFields = document.getElementById("editor-fields");
+const saveButton = document.getElementById("save-portfolio-button");
+const cancelButton = document.getElementById("cancel-portfolio-button");
+const editorMessage = document.getElementById("editor-message");
 
+const portfolioRef = doc(db, "portfolio", "main");
+
+let isRegistering = false;
+let unsubscribePortfolio = null;
+
+// =================================
+// PORTFOLIO FIELD DISCOVERY
+// =================================
+
+function slug(value) {
+    return value.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "item";
+}
+
+const fields = [];
+
+// Ordinary information fields
+document.querySelectorAll(".info-item").forEach(item => {
+    const spans = item.querySelectorAll("span");
+
+    if (spans.length < 2) return;
+
+    const section = item.closest("section");
+    const card = item.closest(".card");
+
+    const sectionName = section?.id || "general";
+    const heading = card?.querySelector("h3")?.textContent.trim() || "details";
+    const label = spans[0].textContent.trim();
+    const valueElement = spans[spans.length - 1];
+
+    const key = `info_${slug(sectionName)}_${slug(heading)}_${slug(label)}`;
+
+    fields.push({
+        key,
+        label: `${heading} — ${label}`,
+
+        get() {
+            return valueElement.textContent.trim();
+        },
+
+        set(value) {
+            valueElement.textContent = value;
+        }
+    });
+});
+
+// Likes, dislikes and hobbies
+document.querySelectorAll(".card").forEach(card => {
+    const badges = card.querySelectorAll(".badge");
+
+    if (!badges.length) return;
+
+    const section = card.closest("section");
+    const heading = card.querySelector("h3")?.textContent.trim() || "list";
+    const sectionName = section?.id || "general";
+    const container = badges[0].parentElement;
+
+    const key = `list_${slug(sectionName)}_${slug(heading)}`;
+
+    fields.push({
+        key,
+        label: heading,
+
+        get() {
+            return Array.from(container.querySelectorAll(".badge"))
+                .map(badge => badge.textContent.trim())
+                .join(", ");
+        },
+
+        set(value) {
+            container.replaceChildren();
+
+            value.split(",").map(item => item.trim())
+                .filter(Boolean)
+                .forEach(item => {
+                    const badge = document.createElement("span");
+                    badge.className = "badge";
+                    badge.textContent = item;
+                    container.appendChild(badge);
+                });
+        }
+    });
+});
+
+// Personal notes
+const notesElement = document.querySelector("#notes .note");
+
+if (notesElement) {
+    fields.push({
+        key: "notes_content",
+        label: "Personal Notes",
+
+        get() {
+            return notesElement.textContent.trim();
+        },
+
+        set(value) {
+            notesElement.textContent = value;
+        }
+    });
+}
+
+// =================================
+// CREATE EDITOR INPUTS
+// =================================
+
+function buildEditor() {
+    editorFields.replaceChildren();
+
+    fields.forEach(field => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "editor-field";
+
+        const label = document.createElement("label");
+        label.textContent = field.label;
+
+        const textarea = document.createElement("textarea");
+        textarea.value = field.get();
+        textarea.dataset.fieldKey = field.key;
+
+        wrapper.append(label, textarea);
+        editorFields.appendChild(wrapper);
+    });
+}
+
+// =================================
+// LOAD FIRESTORE DATA
+// =================================
+
+function applyPortfolioData(data) {
+    fields.forEach(field => {
+        if (typeof data[field.key] === "string") {
+            field.set(data[field.key]);
+        }
+    });
+
+    if (editorPanel.style.display !== "none") {
+        buildEditor();
+    }
+}
+
+function startPortfolioListener() {
+    if (unsubscribePortfolio) {
+        unsubscribePortfolio();
+    }
+
+    unsubscribePortfolio = onSnapshot(
+        portfolioRef,
+
+        snapshot => {
+            if (snapshot.exists()) {
+                applyPortfolioData(snapshot.data());
+            }
+        },
+
+        error => {
+            console.error("Portfolio loading error:", error);
+            editorMessage.textContent =
+                "Could not load portfolio information.";
+        }
+    );
+}
+
+// =================================
+// EDITOR BUTTONS
+// =================================
+
+editButton.addEventListener("click", () => {
+    buildEditor();
+    editorMessage.textContent = "";
+    editorPanel.style.display = "block";
+
+    editorPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+});
+
+cancelButton.addEventListener("click", () => {
+    editorPanel.style.display = "none";
+    editorMessage.textContent = "";
+});
+
+saveButton.addEventListener("click", async () => {
+    saveButton.disabled = true;
+    editorMessage.textContent = "Saving changes...";
+
+    try {
+        const updatedData = {};
+
+        editorFields.querySelectorAll("textarea").forEach(input => {
+            updatedData[input.dataset.fieldKey] = input.value;
+        });
+
+        await setDoc(portfolioRef, updatedData, {
+            merge: true
+        });
+
+        editorMessage.textContent = "Changes saved successfully! ♡";
+        editorPanel.style.display = "none";
+
+    } catch (error) {
+        console.error("Saving error:", error);
+        editorMessage.textContent =
+            "Could not save changes. Please try again.";
+    } finally {
+        saveButton.disabled = false;
+    }
+});
+
+// =================================
 // SIGN IN
-loginForm.addEventListener("submit", async (event) => {
+// =================================
+
+loginForm.addEventListener("submit", async event => {
     event.preventDefault();
 
     const email = document.getElementById("email").value.trim();
@@ -698,13 +922,17 @@ loginForm.addEventListener("submit", async (event) => {
     try {
         await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-        loginError.textContent = "Login failed. Check your email and password.";
         console.error(error);
+        loginError.textContent =
+            "Login failed. Check your email and password.";
     }
 });
 
+// =================================
 // REGISTER
-registerForm.addEventListener("submit", async (event) => {
+// =================================
+
+registerForm.addEventListener("submit", async event => {
     event.preventDefault();
 
     const email = document.getElementById("register-email").value.trim();
@@ -737,8 +965,8 @@ registerForm.addEventListener("submit", async (event) => {
 
         registerMessage.textContent =
             error.code === "auth/email-already-in-use"
-            ? "This email already has an account."
-            : "Registration failed. Please try again.";
+                ? "This email already has an account."
+                : "Registration failed. Please try again.";
 
         if (auth.currentUser) {
             await signOut(auth);
@@ -748,21 +976,24 @@ registerForm.addEventListener("submit", async (event) => {
     }
 });
 
-// LOAD REGISTRATION REQUESTS
+// =================================
+// ACCOUNT APPROVALS
+// =================================
+
 async function loadRegistrations() {
     registrationList.textContent = "Loading requests...";
 
     try {
         const snapshot = await getDocs(collection(db, "registrations"));
 
-        registrationList.innerHTML = "";
+        registrationList.replaceChildren();
 
         if (snapshot.empty) {
             registrationList.textContent = "No pending requests. ♡";
             return;
         }
 
-        snapshot.forEach((registration) => {
+        snapshot.forEach(registration => {
             const data = registration.data();
 
             const card = document.createElement("div");
@@ -805,6 +1036,7 @@ async function loadRegistrations() {
                     );
 
                     await loadRegistrations();
+
                 } catch (error) {
                     console.error(error);
                     alert("Could not approve this account.");
@@ -821,6 +1053,7 @@ async function loadRegistrations() {
                     );
 
                     await loadRegistrations();
+
                 } catch (error) {
                     console.error(error);
                     alert("Could not remove this request.");
@@ -838,19 +1071,33 @@ async function loadRegistrations() {
     }
 }
 
-// CHECK ACCOUNT ACCESS
-onAuthStateChanged(auth, async (user) => {
+// =================================
+// CHECK ACCOUNT PERMISSIONS
+// =================================
+
+onAuthStateChanged(auth, async user => {
     if (isRegistering) return;
 
     if (!user) {
+        if (unsubscribePortfolio) {
+            unsubscribePortfolio();
+            unsubscribePortfolio = null;
+        }
+
         document.body.classList.remove("logged-in");
+
         loginScreen.style.display = "flex";
         ownerPanel.style.display = "none";
+        toolbar.style.display = "none";
+        editorPanel.style.display = "none";
+
         return;
     }
 
     try {
-        const userDocument = await getDoc(doc(db, "users", user.uid));
+        const userDocument = await getDoc(
+            doc(db, "users", user.uid)
+        );
 
         if (!userDocument.exists()) {
             const request = await getDoc(
@@ -877,8 +1124,13 @@ onAuthStateChanged(auth, async (user) => {
 
         loginError.textContent = "";
         loginScreen.style.display = "none";
+
         document.body.classList.add("logged-in");
 
+        // Both accounts can edit portfolio information
+        toolbar.style.display = "flex";
+
+        // Only owner can manage account approvals
         if (role === "owner") {
             ownerPanel.style.display = "block";
             await loadRegistrations();
@@ -886,14 +1138,21 @@ onAuthStateChanged(auth, async (user) => {
             ownerPanel.style.display = "none";
         }
 
+        // Listen for live Firestore changes
+        startPortfolioListener();
+
     } catch (error) {
         console.error("Access check error:", error);
-        loginError.textContent = "Could not verify account access.";
+
+        loginError.textContent =
+            "Could not verify account access.";
+
         await signOut(auth);
     }
 });
 
-console.log("Firebase initialized!");
+console.log("Firebase and portfolio editor initialized!");
 </script>
+
 </body>
 </html>
