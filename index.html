@@ -442,6 +442,26 @@ document.getElementById("search").addEventListener("input", function() {
     });
 });
 </script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBbly-ZVU4M-n3IQilr3wVuHMQN6vXy38I",
+    authDomain: "portfolio-b0fd5.firebaseapp.com",
+    projectId: "portfolio-b0fd5",
+    storageBucket: "portfolio-b0fd5.firebasestorage.app",
+    messagingSenderId: "755031456247",
+    appId: "1:755031456247:web:c6287cba43acba8c0616f2",
+    measurementId: "G-EV3L4D0K28"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  console.log("Firebase connected!");
+</script>
 </body>
 </html>
