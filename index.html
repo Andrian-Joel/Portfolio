@@ -353,6 +353,19 @@ body:not(.logged-in) footer {
 
             <button type="submit">Sign In ♡</button>
         </form>
+        <p style="margin-top:20px;">New here?</p>
+
+<form id="register-form">
+    <input type="email" id="register-email"
+           placeholder="Your email address" required>
+
+    <input type="password" id="register-password"
+           placeholder="Create a password" minlength="6" required>
+
+    <button type="submit">Create Account ♡</button>
+</form>
+
+<div id="register-message"></div>
 
         <div id="login-error"></div>
     </div>
@@ -372,6 +385,11 @@ body:not(.logged-in) footer {
 </header>
 
 <main class="container">
+    <section id="owner-panel" class="section" style="display:none;">
+    <h2 class="section-title">Account Approvals ♡</h2>
+    <p class="section-subtitle">Review new registration requests.</p>
+    <div id="registration-list"></div>
+</section>
 
 <section class="hero" id="home">
     <div class="hero-text">
@@ -524,22 +542,27 @@ document.getElementById("search").addEventListener("input", function() {
 });
 </script>
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
 
-  import {
+import {
     getAuth,
     signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     onAuthStateChanged,
     signOut
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 
-  import {
+import {
     getFirestore,
     doc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+    getDoc,
+    setDoc,
+    deleteDoc,
+    collection,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-  const firebaseConfig = {
+const firebaseConfig = {
     apiKey: "AIzaSyBbly-ZVU4M-n3IQilr3wVuHMQN6vXy38I",
     authDomain: "portfolio-b0fd5.firebaseapp.com",
     projectId: "portfolio-b0fd5",
@@ -547,17 +570,24 @@ document.getElementById("search").addEventListener("input", function() {
     messagingSenderId: "755031456247",
     appId: "1:755031456247:web:c6287cba43acba8c0616f2",
     measurementId: "G-EV3L4D0K28"
-  };
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  const loginForm = document.getElementById("login-form");
-  const loginError = document.getElementById("login-error");
-  const loginScreen = document.getElementById("login-screen");
+const loginForm = document.getElementById("login-form");
+const loginError = document.getElementById("login-error");
+const loginScreen = document.getElementById("login-screen");
+const registerForm = document.getElementById("register-form");
+const registerMessage = document.getElementById("register-message");
+const ownerPanel = document.getElementById("owner-panel");
+const registrationList = document.getElementById("registration-list");
 
-  loginForm.addEventListener("submit", async (event) => {
+let isRegistering = false;
+
+// SIGN IN
+loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const email = document.getElementById("email").value.trim();
@@ -566,48 +596,205 @@ document.getElementById("search").addEventListener("input", function() {
     loginError.textContent = "Signing in...";
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      loginError.textContent = "Login failed. Please check your email and password.";
-      console.error("Sign-in error:", error);
+        loginError.textContent = "Login failed. Check your email and password.";
+        console.error(error);
     }
-  });
+});
 
-  onAuthStateChanged(auth, async (user) => {
+// REGISTER
+registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById("register-email").value.trim();
+    const password = document.getElementById("register-password").value;
+
+    registerMessage.textContent = "Creating your account...";
+    isRegistering = true;
+
+    try {
+        const credential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+        );
+
+        await setDoc(doc(db, "registrations", credential.user.uid), {
+            email: credential.user.email,
+            status: "pending"
+        });
+
+        await signOut(auth);
+
+        registerMessage.textContent =
+            "Account created! Your request is waiting for owner approval. ♡";
+
+        registerForm.reset();
+
+    } catch (error) {
+        console.error("Registration error:", error);
+
+        registerMessage.textContent =
+            error.code === "auth/email-already-in-use"
+            ? "This email already has an account."
+            : "Registration failed. Please try again.";
+
+        if (auth.currentUser) {
+            await signOut(auth);
+        }
+    } finally {
+        isRegistering = false;
+    }
+});
+
+// LOAD REGISTRATION REQUESTS
+async function loadRegistrations() {
+    registrationList.textContent = "Loading requests...";
+
+    try {
+        const snapshot = await getDocs(collection(db, "registrations"));
+
+        registrationList.innerHTML = "";
+
+        if (snapshot.empty) {
+            registrationList.textContent = "No pending requests. ♡";
+            return;
+        }
+
+        snapshot.forEach((registration) => {
+            const data = registration.data();
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.marginBottom = "15px";
+
+            const email = document.createElement("p");
+            email.textContent = data.email;
+
+            const approveButton = document.createElement("button");
+            approveButton.textContent = "Approve ♡";
+
+            const denyButton = document.createElement("button");
+            denyButton.textContent = "Deny";
+
+            [approveButton, denyButton].forEach(button => {
+                button.style.padding = "10px 15px";
+                button.style.margin = "10px 8px 0 0";
+                button.style.border = "none";
+                button.style.borderRadius = "8px";
+                button.style.cursor = "pointer";
+            });
+
+            approveButton.style.background = "#c86f98";
+            approveButton.style.color = "white";
+
+            denyButton.style.background = "#eee8ff";
+            denyButton.style.color = "#69475c";
+
+            approveButton.addEventListener("click", async () => {
+                approveButton.disabled = true;
+
+                try {
+                    await setDoc(doc(db, "users", registration.id), {
+                        role: "editor"
+                    });
+
+                    await deleteDoc(
+                        doc(db, "registrations", registration.id)
+                    );
+
+                    await loadRegistrations();
+                } catch (error) {
+                    console.error(error);
+                    alert("Could not approve this account.");
+                    approveButton.disabled = false;
+                }
+            });
+
+            denyButton.addEventListener("click", async () => {
+                if (!confirm("Remove this registration request?")) return;
+
+                try {
+                    await deleteDoc(
+                        doc(db, "registrations", registration.id)
+                    );
+
+                    await loadRegistrations();
+                } catch (error) {
+                    console.error(error);
+                    alert("Could not remove this request.");
+                }
+            });
+
+            card.append(email, approveButton, denyButton);
+            registrationList.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error(error);
+        registrationList.textContent =
+            "Could not load registration requests.";
+    }
+}
+
+// CHECK ACCOUNT ACCESS
+onAuthStateChanged(auth, async (user) => {
+    if (isRegistering) return;
+
     if (!user) {
-      document.body.classList.remove("logged-in");
-      loginScreen.style.display = "flex";
-      return;
+        document.body.classList.remove("logged-in");
+        loginScreen.style.display = "flex";
+        ownerPanel.style.display = "none";
+        return;
     }
 
     try {
-      const userDocument = await getDoc(doc(db, "users", user.uid));
+        const userDocument = await getDoc(doc(db, "users", user.uid));
 
-      if (!userDocument.exists()) {
-        loginError.textContent = "This account has not been given access.";
-        await signOut(auth);
-        return;
-      }
+        if (!userDocument.exists()) {
+            const request = await getDoc(
+                doc(db, "registrations", user.uid)
+            );
 
-      const role = userDocument.data().role;
+            loginError.textContent = request.exists()
+                ? "Your account is awaiting owner approval. ♡"
+                : "This account has not been given access.";
 
-      if (role !== "owner" && role !== "editor") {
-        loginError.textContent = "This account does not have permission to access the portfolio.";
-        await signOut(auth);
-        return;
-      }
+            await signOut(auth);
+            return;
+        }
 
-      loginError.textContent = "";
-      loginScreen.style.display = "none";
-      document.body.classList.add("logged-in");
+        const role = userDocument.data().role;
+
+        if (role !== "owner" && role !== "editor") {
+            loginError.textContent =
+                "This account does not have permission to access the portfolio.";
+
+            await signOut(auth);
+            return;
+        }
+
+        loginError.textContent = "";
+        loginScreen.style.display = "none";
+        document.body.classList.add("logged-in");
+
+        if (role === "owner") {
+            ownerPanel.style.display = "block";
+            await loadRegistrations();
+        } else {
+            ownerPanel.style.display = "none";
+        }
+
     } catch (error) {
-      console.error("Access check error:", error);
-      loginError.textContent = "Could not verify access. Please try again.";
-      await signOut(auth);
+        console.error("Access check error:", error);
+        loginError.textContent = "Could not verify account access.";
+        await signOut(auth);
     }
-  });
+});
 
-  console.log("Firebase initialized!");
+console.log("Firebase initialized!");
+</script>
 </script>
 </body>
 </html>
