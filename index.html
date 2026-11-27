@@ -272,10 +272,91 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+/* Login Screen */
+body:not(.logged-in) header,
+body:not(.logged-in) main,
+body:not(.logged-in) footer {
+    display: none;
+}
+
+#login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #fff0f5, #eee8ff);
+}
+
+.login-card {
+    background: white;
+    padding: 40px;
+    border-radius: 22px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 35px #dca5bd33;
+}
+
+.login-card h1 {
+    font-family: 'Playfair Display', serif;
+    color: #c86f98;
+    margin-bottom: 10px;
+}
+
+.login-card p {
+    color: #987e8c;
+    font-size: 13px;
+    margin-bottom: 25px;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 14px;
+    border: 1px solid #f0dce6;
+    border-radius: 10px;
+    outline: none;
+}
+
+.login-card button {
+    width: 100%;
+    padding: 13px;
+    background: #c86f98;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#login-error {
+    color: #d34b70;
+    margin-top: 15px;
+    font-size: 13px;
+}
 </style>
 </head>
 
 <body>
+<div id="login-screen">
+    <div class="login-card">
+        <h1>Her Portfolio ♡</h1>
+        <p>A private little space, just for its members.</p>
+
+        <form id="login-form">
+            <input type="email" id="email"
+                   placeholder="Email address" required>
+
+            <input type="password" id="password"
+                   placeholder="Password" required>
+
+            <button type="submit">Sign In ♡</button>
+        </form>
+
+        <div id="login-error"></div>
+    </div>
+</div>
 
 <header>
     <div class="logo">Her Portfolio <span>♡</span></div>
@@ -444,11 +525,22 @@ document.getElementById("search").addEventListener("input", function() {
 </script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getAuth } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+  import {
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+
+  import {
+    getFirestore,
+    doc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyBbly-ZVU4M-n3IQilr3wVuHMQN6vXy38I",
+    apiKey: "REPLACE_WITH_YOUR_API_KEY",
     authDomain: "portfolio-b0fd5.firebaseapp.com",
     projectId: "portfolio-b0fd5",
     storageBucket: "portfolio-b0fd5.firebasestorage.app",
@@ -461,7 +553,61 @@ document.getElementById("search").addEventListener("input", function() {
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  console.log("Firebase connected!");
+  const loginForm = document.getElementById("login-form");
+  const loginError = document.getElementById("login-error");
+  const loginScreen = document.getElementById("login-screen");
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    loginError.textContent = "Signing in...";
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      loginError.textContent = "Login failed. Please check your email and password.";
+      console.error("Sign-in error:", error);
+    }
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      document.body.classList.remove("logged-in");
+      loginScreen.style.display = "flex";
+      return;
+    }
+
+    try {
+      const userDocument = await getDoc(doc(db, "users", user.uid));
+
+      if (!userDocument.exists()) {
+        loginError.textContent = "This account has not been given access.";
+        await signOut(auth);
+        return;
+      }
+
+      const role = userDocument.data().role;
+
+      if (role !== "owner" && role !== "editor") {
+        loginError.textContent = "This account does not have permission to access the portfolio.";
+        await signOut(auth);
+        return;
+      }
+
+      loginError.textContent = "";
+      loginScreen.style.display = "none";
+      document.body.classList.add("logged-in");
+    } catch (error) {
+      console.error("Access check error:", error);
+      loginError.textContent = "Could not verify access. Please try again.";
+      await signOut(auth);
+    }
+  });
+
+  console.log("Firebase initialized!");
 </script>
 </body>
 </html>
